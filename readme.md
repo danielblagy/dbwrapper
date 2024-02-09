@@ -1,0 +1,1 @@
+# A simple, mockable wrapper for working with postgresql database in golang.
