@@ -2,6 +2,9 @@ package dbwrapper
 
 import "context"
 
+//go:generate go run github.com/vektra/mockery/v2@v2.42.0 --name=ConnectionPool --case=underscore
+//go:generate go run github.com/vektra/mockery/v2@v2.42.0 --name=Tx --case=underscore
+
 type ConnectionPool interface {
 	GetSingle(ctx context.Context, dest any, query string, args ...any) error
 	Get(ctx context.Context, dest any, query string, args ...any) error
