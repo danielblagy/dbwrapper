@@ -2,7 +2,10 @@ package dbwrapper
 
 import (
 	"context"
+	"errors"
 	"reflect"
+
+	"database/sql"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
@@ -14,12 +17,21 @@ type querier interface {
 }
 
 func get(ctx context.Context, qb Sqlizer, dest any, q querier) error {
-	sql, args, err := qb.ToSql()
+	query, args, err := qb.ToSql()
 	if err != nil {
 		return ErrToSQLFail
 	}
 
-	return pgxscan.Get(ctx, q, dest, sql, args...)
+	err = pgxscan.Get(ctx, q, dest, query, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return sql.ErrNoRows
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func getList(ctx context.Context, qb Sqlizer, dest any, q querier) error {
