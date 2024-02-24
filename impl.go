@@ -28,7 +28,7 @@ func getList(ctx context.Context, qb Sqlizer, dest any, q querier) error {
 		return ErrToSQLFail
 	}
 
-	if reflect.TypeOf(dest).Kind() != reflect.Slice {
+	if reflect.PointerTo(reflect.TypeOf(dest)).Kind() != reflect.Pointer {
 		return ErrNotSlice
 	}
 
