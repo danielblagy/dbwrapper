@@ -6,6 +6,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+//go:generate go run github.com/vektra/mockery/v2@v2.42.0 --name=ConnectionPool --case=underscore
+
+type ConnectionPool interface {
+	Querier
+	// Close closes all DB connections in the connection pool.
+	Close()
+}
+
 // connectionPool implements Query interface.
 type connectionPool struct {
 	pgPool *pgxpool.Pool

@@ -6,6 +6,17 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+//go:generate go run github.com/vektra/mockery/v2@v2.42.0 --name=Tx --case=underscore
+
+// Tx runs queries in transaction.
+type Tx interface {
+	Querier
+	// Rollback rolls back the transaction.
+	Rollback(ctx context.Context) error
+	// Commit commits the transaction.
+	Commit(ctx context.Context) error
+}
+
 type tx struct {
 	pgTx pgx.Tx
 }

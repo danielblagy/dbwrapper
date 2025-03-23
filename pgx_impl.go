@@ -11,12 +11,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type querier interface {
+type pgxQuerier interface {
 	Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error)
 	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
-func get(ctx context.Context, qb Sqlizer, dest any, q querier) error {
+func get(ctx context.Context, qb Sqlizer, dest any, q pgxQuerier) error {
 	query, args, err := qb.ToSql()
 	if err != nil {
 		return ErrToSQLFail
@@ -34,7 +34,7 @@ func get(ctx context.Context, qb Sqlizer, dest any, q querier) error {
 	return nil
 }
 
-func getList(ctx context.Context, qb Sqlizer, dest any, q querier) error {
+func getList(ctx context.Context, qb Sqlizer, dest any, q pgxQuerier) error {
 	sql, args, err := qb.ToSql()
 	if err != nil {
 		return ErrToSQLFail
@@ -47,21 +47,26 @@ func getList(ctx context.Context, qb Sqlizer, dest any, q querier) error {
 	return pgxscan.Select(ctx, q, dest, sql, args...)
 }
 
-func exec(ctx context.Context, qb Sqlizer, q querier) error {
+func exec(ctx context.Context, qb Sqlizer, q pgxQuerier) error {
 	sql, args, err := qb.ToSql()
 	if err != nil {
 		return ErrToSQLFail
 	}
 
-	_, err = q.Query(ctx, sql, args...)
+	rows, err := q.Query(ctx, sql, args...)
 	if err != nil {
 		return err
 	}
 
+	// TODO for some reason using Query and not reading returned pgx.Rows object
+	// makes connection busy when using pgx.Tx, so force-close is needed.
+	// perhaps there's a better way to go about it
+	rows.Close()
+
 	return nil
 }
 
-func beginTx(ctx context.Context, q querier) (Tx, error) {
+func beginTx(ctx context.Context, q pgxQuerier) (Tx, error) {
 	tx, err := q.Begin(ctx)
 	if err != nil {
 		return nil, err
